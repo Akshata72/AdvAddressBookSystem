@@ -11,9 +11,9 @@ namespace Address_Book_System_ADO
         static void Main(string[] args)
         {
             AddressBookManagement addressBookManagement = new AddressBookManagement();
-
-            addressBookManagement.DataBaseConnection(); //UC1
+            addressBookManagement.GetAllAddressBookData();
             Console.ReadLine();
         }
     }
 }
+    
