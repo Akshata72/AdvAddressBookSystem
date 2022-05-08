@@ -1,0 +1,124 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Data.SqlClient;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace AddressBookSystemADO
+{
+    public class Details
+    {
+        static string connectionString = @"Server=(localdb)\MSSQLLocalDB;Database=AddressBookService;Trusted_Connection=True;";
+        static SqlConnection sqlConnection = new SqlConnection(connectionString);
+
+        public void EstablishConnection()
+        {
+            if (sqlConnection != null && sqlConnection.State.Equals(ConnectionState.Closed))
+            {
+                try
+                {
+                    sqlConnection.Open();
+                }
+                catch (Exception)
+                {
+                    throw new AddressException(AddressException.ExceptionType.Connection_Failed, "connection failed");
+
+                }
+            }
+        }
+        public void CloseConnection()
+        {
+            if (sqlConnection != null && sqlConnection.State.Equals(ConnectionState.Open))
+            {
+                try
+                {
+                    sqlConnection.Close();
+                }
+                catch (Exception)
+                {
+                    throw new AddressException(AddressException.ExceptionType.Connection_Failed, "connection failed");
+                }
+            }
+        }
+        public void GetAddressBookDetails()
+        {
+            try
+            {
+                AddressBook address = new AddressBook();
+                SqlConnection sqlConnection = new SqlConnection(connectionString);
+                using (sqlConnection)
+                {
+                    string Sqlquery = @"select * from AddressBook ";
+                    SqlCommand cmd = new SqlCommand(Sqlquery, sqlConnection);
+                    sqlConnection.Open();
+                    SqlDataReader reader = cmd.ExecuteReader();
+                    if (reader.HasRows)
+                    {
+                        while (reader.Read())
+                        {
+                            address.ID = reader.GetInt32(0);
+                            address.First_Name = reader.GetString(1);
+                            address.Last_Name = reader.GetString(2);
+                            address.Address = reader.GetString(3);
+                            address.City = reader.GetString(4);
+                            address.State = reader.GetString(5);
+                            address.Zip = reader.GetInt64(6);
+                            address.PhoneNumber = reader.GetInt64(7);
+                            address.Email = reader.GetString(8);
+                            address.Type = reader.GetString(9);
+                            address.AddressBookName = reader.GetString(10);
+                            Console.WriteLine(address.ID + "," + address.First_Name + "," + address.Last_Name + "," + address.Address + "," + address.City + ","
+                                + address.State + "," + address.Zip + "," + address.PhoneNumber + "," + address.Email + "," + address.Type + "," + address.AddressBookName);
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine("No Data Found");
+                    }
+                    sqlConnection.Close();
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+
+            }
+        }
+        public bool AddContact(AddressBook address)
+        {
+            try
+            {
+                using (sqlConnection)
+                {
+                    SqlCommand sqlCommand = new SqlCommand("Add_AddressBookContact", sqlConnection);
+                    sqlCommand.CommandType = CommandType.StoredProcedure;
+                    sqlCommand.Parameters.AddWithValue("@First_Name", address.First_Name);
+                    sqlCommand.Parameters.AddWithValue("@Last_Name", address.Last_Name);
+                    sqlCommand.Parameters.AddWithValue("@Address", address.Address);
+                    sqlCommand.Parameters.AddWithValue("@City", address.City);
+                    sqlCommand.Parameters.AddWithValue("@State", address.State);
+                    sqlCommand.Parameters.AddWithValue("@Zip", address.Zip);
+                    sqlCommand.Parameters.AddWithValue("@PhoneNumber", address.PhoneNumber);
+                    sqlCommand.Parameters.AddWithValue("@Email", address.Email);
+                    sqlCommand.Parameters.AddWithValue("@AddressBookName", address.AddressBookName);
+                    sqlCommand.Parameters.AddWithValue("@Type", address.Type);
+                    sqlConnection.Open();
+
+                    var result = sqlCommand.ExecuteNonQuery();
+                    sqlConnection.Close();
+                    if (result != 0)
+                    {
+                        return true;
+                    }
+                    return false;
+                }
+            }
+            catch (Exception)
+            {
+                throw new AddressException(AddressException.ExceptionType.Contact_Not_Add, "Contact are not added");
+            }
+        }
+    }
+}
